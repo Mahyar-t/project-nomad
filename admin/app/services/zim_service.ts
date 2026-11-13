@@ -44,7 +44,6 @@ import { getHostedContentHeaders } from '../utils/hosted_content_auth.js'
 import { KIWIX_CATALOG_BASE_URL } from '../../constants/kiwix.js'
 
 const ZIM_MIME_TYPES = ['application/x-zim', 'application/x-openzim', 'application/octet-stream']
-const WIKIPEDIA_OPTIONS_URL = 'https://raw.githubusercontent.com/Crosstalk-Solutions/project-nomad/refs/heads/main/collections/wikipedia.json'
 
 @inject()
 export class ZimService {
@@ -802,8 +801,11 @@ export class ZimService {
 
   async getWikipediaOptions(): Promise<WikipediaOption[]> {
     try {
-      const response = await axios.get(WIKIPEDIA_OPTIONS_URL)
-      const data = response.data
+      const manifestService = new CollectionManifestService()
+      const data = await manifestService.getSpecWithFallback('wikipedia')
+      if (!data) {
+        throw new Error('Wikipedia options are not cached. Connect to download them first.')
+      }
 
       const validated = await vine.validate({
         schema: wikipediaOptionsFileSchema,
